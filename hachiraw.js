@@ -13,8 +13,8 @@ class Hachiraw extends ComicSource {
     key = "hachiraw"
     version = "1.0.0"
     minAppVersion = "1.6.0"
-    // 本地导入时 url 仅用于标识来源；上传到源库后改回 raw 链接即可
-    url = "https://hachiraw.win"
+    // 源更新检测地址（指向源库中本文件的 raw 链接）
+    url = "https://raw.githubusercontent.com/YUIRIKIiii/venera-sources/main/hachiraw.js"
 
     base = "https://hachiraw.win"
 
