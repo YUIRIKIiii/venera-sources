@@ -3,14 +3,14 @@
     "name": "Hachiraw",
     "fileName": "hachiraw.js",
     "key": "hachiraw",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "description": "hachiraw.win 日漫RAW源（25 个题材分类 + 最新更新；无服务端搜索，搜索为本地匹配）"
   },
   {
     "name": "包子漫画",
     "fileName": "bzmgcn.js",
     "key": "bzmgcn",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "description": "bzmgcn 包子漫画（题材 + 地区 + 连载状态 分类浏览，走 tw 镜像，书名简体）"
   },
   {

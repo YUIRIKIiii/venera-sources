@@ -3,8 +3,11 @@
  * 适配 Venera / VeneraX (io.github.kyosee.venera)
  *
  * 说明：
- * - 探索页只放"最新更新"；站点的 26 个题材（Action / Fantasy / Ecchi …）
- *   统一收进「分类」页，标签为中文，点进去是 /category/<id>/page/<n>/ 分页列表。
+ * - 探索页只放"最新更新"（发现页标签为「Hachiraw 最新」）；站点的 25 个题材
+ *   （Action / Fantasy / Ecchi …）统一收进「分类」页，标签为中文，
+ *   点进去是 /category/<id>/page/<n>/ 分页列表。
+ * - 发现页标签以 explore 页 title 为唯一标识（全局唯一），因此带源名前缀，
+ *   避免与其它源的「最新更新」标签互相覆盖。
  * - 该站无可用服务端搜索（/?s= 与 /search?s= 均被忽略），
  *   因此 search 采用"拉取最新列表 + 本地标题匹配"的兜底方式；
  *   也支持直接粘贴漫画详情页链接打开。
@@ -13,7 +16,7 @@
 class Hachiraw extends ComicSource {
     name = "Hachiraw"
     key = "hachiraw"
-    version = "1.1.0"
+    version = "1.1.1"
     minAppVersion = "1.6.0"
     // 源更新检测地址（指向源库中本文件的 raw 链接）
     url = "https://raw.githubusercontent.com/YUIRIKIiii/venera-sources/main/hachiraw.js"
@@ -141,7 +144,7 @@ class Hachiraw extends ComicSource {
 
     explore = [
         {
-            title: "最新更新",
+            title: "Hachiraw 最新",
             type: "multiPageComicList",
             load: async (page) => this.loadArchive("", page),
         },

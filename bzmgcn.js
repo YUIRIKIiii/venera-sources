@@ -7,15 +7,17 @@
  *   （SHA-256 PoW + 浏览器指纹绑定），纯脚本请求无法通过，故统一走
  *   tw.bzmgcn.com 镜像；列表接口传 language=cn 可拿到简体书名。
  * - 列表走 JSON 接口 /api/bzmhq/amp_comic_list，比解析 HTML 稳定。
- * - 探索页只保留"最新更新"；题材、地区（国漫/日漫/韩漫/欧美）、
+ * - 探索页只保留"包子漫画 最新"；题材、地区（国漫/日漫/韩漫/欧美）、
  *   状态（连载中/已完结）全部整合进「分类」页，可组合筛选。
+ * - 发现页的标签以 explore 页的 title 为唯一标识（全局唯一），
+ *   所以这里带上源名前缀，避免和其它源同名标签互相覆盖。
  * - 详情页为 SSR，章节链接形如 /user/page_direct?comic_id=&section_slot=&chapter_slot=。
  * - 阅读页图片在 data-src，路径含 /scomic/，无需 Referer 防盗链。
  */
 class BzmgcnSource extends ComicSource {
     name = "包子漫画"
     key = "bzmgcn"
-    version = "1.1.0"
+    version = "1.1.1"
     minAppVersion = "1.6.0"
 
     // 源更新检测地址（改成你自己的 raw 链接）
@@ -164,7 +166,7 @@ class BzmgcnSource extends ComicSource {
     // 探索页只保留最新更新，其余维度都收进「分类」页
     explore = [
         {
-            title: "最新更新",
+            title: "包子漫画 最新",
             type: "multiPageComicList",
             load: async (page) => this.loadList({}, page),
         },
