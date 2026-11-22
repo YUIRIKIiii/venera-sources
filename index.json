@@ -5,5 +5,12 @@
     "key": "hachiraw",
     "version": "1.0.0",
     "description": "hachiraw.win 日漫RAW源（无服务端搜索，搜索为本地匹配）"
+  },
+  {
+    "name": "包子漫画",
+    "fileName": "bzmgcn.js",
+    "key": "bzmgcn",
+    "version": "1.0.0",
+    "description": "bzmgcn 包子漫画（国漫/日漫/韩漫/欧美，走 tw 镜像，书名简体）"
   }
 ]
