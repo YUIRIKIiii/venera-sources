@@ -7,13 +7,15 @@
  *   （SHA-256 PoW + 浏览器指纹绑定），纯脚本请求无法通过，故统一走
  *   tw.bzmgcn.com 镜像；列表接口传 language=cn 可拿到简体书名。
  * - 列表走 JSON 接口 /api/bzmhq/amp_comic_list，比解析 HTML 稳定。
+ * - 探索页只保留"最新更新"；题材、地区（国漫/日漫/韩漫/欧美）、
+ *   状态（连载中/已完结）全部整合进「分类」页，可组合筛选。
  * - 详情页为 SSR，章节链接形如 /user/page_direct?comic_id=&section_slot=&chapter_slot=。
  * - 阅读页图片在 data-src，路径含 /scomic/，无需 Referer 防盗链。
  */
 class BzmgcnSource extends ComicSource {
     name = "包子漫画"
     key = "bzmgcn"
-    version = "1.0.0"
+    version = "1.1.0"
     minAppVersion = "1.6.0"
 
     // 源更新检测地址（改成你自己的 raw 链接）
@@ -22,6 +24,19 @@ class BzmgcnSource extends ComicSource {
     base = "https://tw.bzmgcn.com"
     coverBase = "https://static-tw.bzmgcn.com/cover"
     pageSize = 36
+
+    // 题材 slug -> 中文（与站点 /classify 页的 type= 一致）
+    typeNames = {
+        lianai: "恋爱", chunai: "纯爱", gufeng: "古风", yineng: "异能",
+        xuanyi: "悬疑", juqing: "剧情", kehuan: "科幻", qihuan: "奇幻",
+        xuanhuan: "玄幻", chuanyue: "穿越", mouxian: "冒险", tuili: "推理",
+        wuxia: "武侠", gedou: "格斗", zhanzheng: "战争", rexie: "热血",
+        gaoxiao: "搞笑", danuzhu: "大女主", dushi: "都市", zongcai: "总裁",
+        hougong: "后宫", richang: "日常", hanman: "韩漫", shaonian: "少年",
+        qita: "其它",
+    }
+    regionNames = { cn: "国漫", jp: "日漫", kr: "韩漫", en: "欧美" }
+    stateNames = { serial: "连载中", pub: "已完结" }
 
     get headers() {
         return {
@@ -63,6 +78,19 @@ class BzmgcnSource extends ComicSource {
 
     strip(s) {
         return this.decode((s || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim())
+    }
+
+    // 保留换行的纯文本（用于简介）
+    cleanText(s) {
+        return this.decode(
+            (s || "")
+                .replace(/<br\s*\/?>/gi, "\n")
+                .replace(/<\/(p|div)>/gi, "\n")
+                .replace(/<[^>]+>/g, "")
+        )
+            .replace(/[ \t]+/g, " ")
+            .replace(/\n{3,}/g, "\n\n")
+            .trim()
     }
 
     // 从 og:xxx 或 name="description" 里取值
@@ -129,71 +157,66 @@ class BzmgcnSource extends ComicSource {
                 })
             )
         }
-        // 只要这一页还有内容，就允许继续往后翻
-        let maxPage = comics.length > 0 ? n + 1 : n
-        return { comics: comics, maxPage: maxPage }
+        // 接口用 next 字段标识是否还有下一页；翻过最后一页站点会返回 406
+        return { comics: comics, maxPage: data.next ? n + 1 : n }
     }
 
-    tab(title, p) {
-        return {
-            title: title,
-            type: "multiPageComicList",
-            load: async (page) => this.loadList(p, page),
-        }
-    }
-
+    // 探索页只保留最新更新，其余维度都收进「分类」页
     explore = [
         {
             title: "最新更新",
             type: "multiPageComicList",
             load: async (page) => this.loadList({}, page),
         },
-        {
-            title: "国漫",
-            type: "multiPageComicList",
-            load: async (page) => this.loadList({ region: "cn" }, page),
-        },
-        {
-            title: "日漫",
-            type: "multiPageComicList",
-            load: async (page) => this.loadList({ region: "jp" }, page),
-        },
-        {
-            title: "韩漫",
-            type: "multiPageComicList",
-            load: async (page) => this.loadList({ region: "kr" }, page),
-        },
-        {
-            title: "欧美",
-            type: "multiPageComicList",
-            load: async (page) => this.loadList({ region: "en" }, page),
-        },
-        {
-            title: "连载中",
-            type: "multiPageComicList",
-            load: async (page) => this.loadList({ region: "cn", state: "serial" }, page),
-        },
-        {
-            title: "已完结",
-            type: "multiPageComicList",
-            load: async (page) => this.loadList({ region: "cn", state: "pub" }, page),
-        },
-        {
-            title: "热血",
-            type: "multiPageComicList",
-            load: async (page) => this.loadList({ region: "cn", type: "rexie" }, page),
-        },
-        {
-            title: "恋爱",
-            type: "multiPageComicList",
-            load: async (page) => this.loadList({ region: "cn", type: "lianai" }, page),
-        },
-        {
-            title: "玄幻",
-            type: "multiPageComicList",
-            load: async (page) => this.loadList({ region: "cn", type: "xuanhuan" }, page),
-        },
     ]
+
+    // 分类页：题材（点进去看列表）+ 地区/状态（列表页顶部的选项）
+    category = {
+        title: "包子漫画 分类",
+        parts: [
+            {
+                name: "题材",
+                type: "fixed",
+                categories: [
+                    "全部", "恋爱", "纯爱", "古风", "异能", "悬疑", "剧情",
+                    "科幻", "奇幻", "玄幻", "穿越", "冒险", "推理", "武侠",
+                    "格斗", "战争", "热血", "搞笑", "大女主", "都市", "总裁",
+                    "后宫", "日常", "韩漫", "少年", "其它",
+                ],
+                itemType: "category",
+                categoryParams: [
+                    "all", "lianai", "chunai", "gufeng", "yineng", "xuanyi",
+                    "juqing", "kehuan", "qihuan", "xuanhuan", "chuanyue",
+                    "mouxian", "tuili", "wuxia", "gedou", "zhanzheng", "rexie",
+                    "gaoxiao", "danuzhu", "dushi", "zongcai", "hougong",
+                    "richang", "hanman", "shaonian", "qita",
+                ],
+            },
+        ],
+        enableRankingPage: false,
+    }
+
+    // 题材列表页：顶部两个选项控制地区和连载状态
+    categoryComics = {
+        load: async (category, param, options, page) => {
+            let region = (options && options[0]) || "all"
+            let state = (options && options[1]) || "all"
+            return await this.loadList(
+                { type: param || "all", region: region, state: state },
+                page
+            )
+        },
+        optionList: [
+            {
+                label: "地区",
+                options: ["all-全部", "cn-国漫", "jp-日漫", "kr-韩漫", "en-欧美"],
+            },
+            {
+                label: "状态",
+                options: ["all-全部", "serial-连载中", "pub-已完结"],
+            },
+        ],
+    }
 
     // 搜索区段：从 l-content search 到 footer
     searchSegment(html) {
@@ -268,20 +291,48 @@ class BzmgcnSource extends ComicSource {
             let url = `${this.base}/comic/${cid}`
             let html = await this.getText(url)
 
-            let title = this.meta(html, "og:novel:book_name") || cid
+            // 详情接口带 language=cn，能拿到简体书名/简介/题材，比 tw 页面上的繁体更准确
+            let meta = null
+            try {
+                let data = await this.getJson(
+                    `${this.base}/api/bzmhq/comic?comic_id=${encodeURIComponent(cid)}&language=cn`
+                )
+                meta = data && data.data
+            } catch (e) {
+                meta = null
+            }
+
+            let title = (meta && meta.name) || this.meta(html, "og:novel:book_name") || cid
             let cover =
-                this.meta(html, "og:image") || `${this.coverBase}/${cid}.jpg`
-            let desc = this.meta(html, "og:description")
-            let author = this.meta(html, "og:novel:author")
-            let status = this.meta(html, "og:novel:status")
-            let category = this.meta(html, "og:novel:category")
+                meta && meta.topic_img
+                    ? this.coverUrl(meta.topic_img, cid)
+                    : this.meta(html, "og:image") || `${this.coverBase}/${cid}.jpg`
+            let desc = (meta && meta.description) || this.meta(html, "og:description")
+            let author = (meta && meta.author) || this.meta(html, "og:novel:author")
+
+            let stateKey = (meta && meta.state) || this.meta(html, "og:novel:status")
+            let status = this.stateNames[stateKey] || stateKey
+            let region =
+                meta && meta.region ? this.regionNames[meta.region] || meta.region : ""
+
+            let cats = meta && meta.type
+                ? meta.type
+                      .split("|")
+                      .map((x) => x.trim())
+                      .filter((x) => x.length > 0 && x !== "all")
+                      .map((x) => this.typeNames[x] || x)
+                : []
+            if (cats.length === 0) {
+                // 兜底：页面里的 og:novel:category
+                cats = this.meta(html, "og:novel:category")
+                    .split(/[,，]/)
+                    .map((x) => x.trim())
+                    .filter((x) => x.length > 0)
+            }
 
             let tags = new Map()
-            let cats = category
-                .split(/[,，]/)
-                .map((x) => x.trim())
-                .filter((x) => x.length > 0)
-            if (cats.length > 0) tags.set("分类", cats)
+            if (cats.length > 0) tags.set("题材", cats)
+            if (region) tags.set("地区", [region])
             if (author) tags.set("作者", [author])
             if (status) tags.set("状态", [status])
 
@@ -311,7 +362,7 @@ class BzmgcnSource extends ComicSource {
                 title: title,
                 subtitle: status,
                 cover: cover,
-                description: this.strip(desc),
+                description: this.cleanText(desc),
                 tags: tags,
                 chapters: chapters,
                 url: url,
