@@ -19,7 +19,7 @@
 class MangacopySource extends ComicSource {
     name = "拷貝漫畫"
     key = "mangacopy"
-    version = "1.1.0"
+    version = "1.1.1"
     minAppVersion = "1.6.0"
 
     // 源更新檢測地址（改成你自己的 raw 鏈接）
@@ -40,7 +40,13 @@ class MangacopySource extends ComicSource {
             "Accept-Language": "zh-CN,zh;q=0.9",
             "Referer": this.base + "/",
         }
-        if (this.ck) h["Cookie"] = this.ck
+        if (this.ck) {
+            h["Cookie"] = this.ck
+            // 站點自己的前端是把 cookie 裏的 token 取出來，放進 Authorization 頭去調接口的，
+            // 所以兩個都帶上，避免服務端只認其中一種。
+            let m = String(this.ck).match(/(?:^|;\s*)token=([^;]+)/)
+            if (m && m[1]) h["Authorization"] = "Token " + m[1].trim()
+        }
         return h
     }
 
