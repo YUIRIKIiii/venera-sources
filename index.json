@@ -3,21 +3,21 @@
     "name": "Hachiraw",
     "fileName": "hachiraw.js",
     "key": "hachiraw",
-    "version": "1.1.1",
+    "version": "1.1.0",
     "description": "hachiraw.win 日漫RAW源（25 个题材分类 + 最新更新；无服务端搜索，搜索为本地匹配）"
   },
   {
     "name": "包子漫画",
     "fileName": "bzmgcn.js",
     "key": "bzmgcn",
-    "version": "1.1.1",
+    "version": "1.1.0",
     "description": "bzmgcn 包子漫画（题材 + 地区 + 连载状态 分类浏览，走 tw 镜像，书名简体）"
   },
   {
     "name": "拷貝漫畫",
     "fileName": "mangacopy.js",
     "key": "mangacopy",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "description": "manga-copy.com 拷贝漫画（列表/搜索可直接用；章节目录与图片需在「账号 → Cookie 登录」填入自己浏览器的 Cookie）"
   }
 ]
